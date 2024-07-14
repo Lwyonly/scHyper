@@ -2,7 +2,7 @@
 
 ## What is scHyper?
 
-![workflow](../../桌面/研/workflow.jpg)
+![workflow](workflow.jpg)
 
 We developed scHyper, which aims to decode context-driven intercellular communication from scRNA-seq data by constructing hypergraph networks and applying hypergraph neural network models . (i) scHyper integrates the Cellinker and CellChatDB to obtain rich L-R interaction relationships and signaling pathway annotations. (ii) scHyper constructs intercellular communication networks in the form of hypergraphs, analyzing intercellular communication from a global perspective. (iii) scHyper uses hypergraph neural network models to learn intercellular communication patterns and capture nonlinear relationships and complex interaction patterns. (iv) scHyper implements nonparametric tests to evaluate the statistical significance of interactions between cell types and thus identifies intercellular communication relationships that are biologically significant.
 
