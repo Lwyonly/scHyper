@@ -1,0 +1,82 @@
+---
+title: "scHyper_visualization"
+author: "li"
+date: "2024-07-13"
+output: html_document
+---
+
+# Load data from results
+```{r}
+library(data.table)
+source("./Visualize/Visualization.R")
+validlrs <- read.csv('./results/demo/validlrs.csv')
+interaction_df <- read.csv('./results/demo/interaction_tensor.csv', header=FALSE)
+pval <- read.csv('./results/demo/tensor_pval.csv', header=FALSE)
+meta <- read.csv('./results/demo/meta.csv', header=TRUE, row.names = 1)
+data_signaling <- fread('./results/demo/data_signaling.csv', header=TRUE)
+```
+
+# Process data
+```{r, fig.width=5,fig.height = 5, fig.wide = TRUE, fig.align = "center"}
+## process1 
+rownames(validlrs) <- validlrs$interaction_name
+colnames(validlrs)[1] <- "ligand"
+colnames(validlrs)[2] <- "receptor"
+## process2  
+prob <- as.matrix(interaction_df)
+dim(prob) <- c(4, 4, 12)
+dimnames(prob)[[1]] <- c('ct1', 'ct2', 'ct3', 'ct4')
+dimnames(prob)[[2]] <- c('ct1', 'ct2', 'ct3', 'ct4')
+dimnames(prob)[[3]] <- validlrs[,5]
+## process3
+pval <- as.matrix(pval)
+dim(pval) <- c(4, 4, 12)
+dimnames(pval)[[1]] <- c('ct1', 'ct2', 'ct3', 'ct4')
+dimnames(pval)[[2]] <- c('ct1', 'ct2', 'ct3', 'ct4')
+dimnames(pval)[[3]] <- validlrs[,5]
+groupSize <- c(4,7,5,7)
+## process4 
+net <- list()
+net$prob <- prob
+net$pval <- pval
+celltypes <- dimnames(pval)[[1]]
+net <- aggregateNet(net, validlrs, celltypes, thresh=0.05)
+## process5 
+row_names <- data_signaling$V1
+data_signaling <- data_signaling[, -1, drop = FALSE]
+rownames(data_signaling) <- row_names
+```
+
+# Ploting a circular diagram of intercellular interactions.
+```{r, fig.width=5,fig.height = 5, fig.wide = TRUE, fig.align = "center"}
+library(igraph)
+netVisual_circle(net$weight, vertex.weight = groupSize, weight.scale = T, label.edge= F)
+```
+
+# Ploting intercellular interactions in signaling pathways
+```{r, fig.width=8,fig.height = 5.5, fig.wide = TRUE, fig.align = "center"}
+library(circlize)
+library(igraph)
+vertex.receiver = seq(1,2)
+netVisual_aggregate(groupSize, validlrs, prob, pval, signaling = c("CLEC"),  vertex.receiver = vertex.receiver, layout = "hierarchy")
+netVisual_aggregate(groupSize, validlrs, prob, pval, signaling = c("CLEC"), layout = "chord")
+netVisual_aggregate(groupSize, validlrs, prob, pval, signaling = c("CLEC"), layout = "circle")
+netVisual_heatmap(net, signaling = "FN1_TNFRSF11B", color.heatmap = "Reds")
+```
+
+# The contribution of L-R pairs to the entire pathway
+```{r, fig.width=4,fig.height = 2, fig.wide = TRUE, fig.align = "center"}
+library(dplyr)
+library(ggplot2)
+netAnalysis_contribution(validlrs, prob, pval, signaling = c("CLEC"))
+```
+
+
+# Create a bubble chart to visualize all significant interactions between specific cell types
+```{r, fig.width=6,fig.height = 2, fig.wide = TRUE, fig.align = "center"}
+library(ggplot2)
+netVisual_bubble(net, celltypes, validlrs, sources.use = c(1:4), targets.use = c(1:4), remove.isolate = FALSE, thresh = 0.05)
+```
+
+
+
